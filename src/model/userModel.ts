@@ -18,11 +18,11 @@ const userSchema:mongoose.Schema = new mongoose.Schema<IUSer>({
   password: {type:String, required:true},
   phoneNo: {type: String, required:true},
   isLogin: {type: Boolean, default: false},
-  book: [{type:mongoose.Types.ObjectId, ref:"user"}],
+  book: [{type:mongoose.Types.ObjectId, ref:"book"}],
   role: {type: String, default: "user"}
 },
 {timestamps: true}
 )
 
 
-export const userModel = mongoose.model<IUSer>("user", userSchema)
+export const userModel = mongoose.model<IUSer>("book", userSchema)

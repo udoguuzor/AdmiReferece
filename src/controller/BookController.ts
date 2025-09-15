@@ -1,16 +1,14 @@
 import express, {Request, Response} from "express"
 import { bookModel, IBook } from "../model/bookModel";
-import { userModel } from "../model/userModel";
-
 
 export const createBook = async(req:Request, res:Response): Promise<void>=>{
     try{
         const {title, yearOfPublication, category, author} = req.body;
         if(!title || !yearOfPublication || !category || !author){
-            res.status(400).json({mesage:"All fields are required"})
+            res.status(400).json({message:"All fields are required"})
             return;
         }
-        const bookExist = await bookModel.findOne({author});
+        const bookExist = await bookModel.findOne({title, author}); // Check for a book with both title and author
         if(bookExist){
             res.status(401).json({message: "Book Already Exist"})
             return;
@@ -36,7 +34,9 @@ export const getAllBooks = async(req:Request, res:Response): Promise<void>=>{
 export const getABook = async(req:Request, res:Response): Promise<void>=>{
     try{
         const {id} = req.params;
-        const getBook = await bookModel.findById(id).populate("Book");
+        // There is nothing to populate on a book model, unless it references a user.
+        // Assuming your book schema doesn't reference another model, you just find it.
+        const getBook = await bookModel.findById(id).populate("seller"); 
         if(!getBook){
             res.status(404).json({message: "Book not found"});
             return;
@@ -47,16 +47,18 @@ export const getABook = async(req:Request, res:Response): Promise<void>=>{
         return;
     }
 }
+
 export const updateBook = async(req:Request, res:Response): Promise<void> =>{
     try{
-        const {title, author, category, yearOfPublication } = req.body as Partial<IBook>
-        const {id} = req.params; 
-        const userUpdate = await userModel.findByIdAndUpdate(id)
-        if(!userUpdate){
-            res.status(404).json({message: " No user found tp update"});
+        const { id } = req.params;
+        const updateData = req.body as Partial<IBook>;
+        // Use bookModel instead of userModel
+        const updatedBook = await bookModel.findByIdAndUpdate(id, updateData, { new: true });
+        if(!updatedBook){
+            res.status(404).json({message: "No book found to update"});
             return;
         }
-        res.status(200).json({message: "User updated successfully", data: userUpdate})
+        res.status(200).json({message: "Book updated successfully", data: updatedBook})
     }catch(err: any){
         res.status(500).json({message: " An error occured trying to updating book", err:err.message})
         return;
@@ -65,27 +67,29 @@ export const updateBook = async(req:Request, res:Response): Promise<void> =>{
 
 export const deleteABook = async(req:Request, res: Response): Promise<void> =>{
    try{
-     const deleteBook = await userModel.findByIdAndDelete(req.params.id)
-    if(deleteBook){
-        res.status(404).json({message: "No book found to delete"})
-        return;
-    }
-    res.status(200).json({message: "no book found to delete"})
-    return
+       // Use bookModel instead of userModel
+       const deleteBook = await bookModel.findByIdAndDelete(req.params.id)
+       // The condition was backward; if deleteBook exists, it means a book was found and deleted.
+       if(!deleteBook){ 
+           res.status(404).json({message: "No book found to delete"})
+           return;
+       }
+       res.status(200).json({message: "Book deleted successfully", data: deleteBook})
+       return;
    }catch(err: any){
-        res.status(500).json({message: " An error occured trying to deleting book", err:err.message})
-        return;
-    }
+       res.status(500).json({message: " An error occured trying to deleting book", err:err.message})
+       return;
+   }
 }
 
 export const deleteAllBooks = async(req:Request, res: Response): Promise<void> =>{
     try{
-      await userModel.deleteMany()
+      // Use bookModel instead of userModel
+      await bookModel.deleteMany()
       res.status(200).json({message: "Books deleted successfully"});
       return
-      
     }catch(err: any){
-        res.status(500).json({message: " An error occured trying to detete All book", err:err.message})
+        res.status(500).json({message: " An error occured trying to delete All books", err:err.message})
         return;
     }
 }

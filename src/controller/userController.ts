@@ -6,7 +6,7 @@ import generateToken from "../middlewares/generate";
 export const signUp = async(req:Request, res:Response):Promise<void>=>{
     try{
         const {email, name, password, phoneNo} = req.body;
-        if(!email || !password || !name || phoneNo){
+        if(!email || !password || !name || !phoneNo){
             res.status(400).json({message:"All fileds are required"});
             return;
         }
@@ -38,7 +38,7 @@ export const loginUser = async(req:Request, res:Response): Promise<void>=>{
             res.status(404).json({message: "no user found"})
             return;
         }
-        const isMatch = await argon2.verify(password, user.password);
+        const isMatch = await argon2.verify(user.password, password);
         if(!isMatch){
             res.status(409).json({message: "invalid credentials"})
             return
@@ -91,12 +91,12 @@ export const updateUser = async(req: Request, res:Response):Promise<void>=>{
     try{
         const {name, email, password, phoneNo} = req.body as Partial<IUSer>;
         const {id} = req.params;
-        const user = await userModel.findByIdAndUpdate(id);
+        const user = await userModel.findByIdAndUpdate(id, {name, email, password, phoneNo}, {new: true});
         if(!user){
             res.status(404).json({message: "No user found to update"})
             return;
         }
-        res.status(200).json({message: "user updsated successfully", data: user})
+        res.status(200).json({message: "user updated successfully", data: user})
         return;
     }catch(err:any){
         res.status(500).json({message: "An error occured trying to login", err: err.message})
